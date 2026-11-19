@@ -50,6 +50,8 @@ crop_symptom_map = {
 symptom_status_options = list(label_encoders['Symptom_Status'].classes_)
 severity_options = list(label_encoders['Severity'].classes_)
 disease_classes = list(target_encoder.classes_)
+with open(os.path.join(app.root_path, 'comparison_models_metrics.json'), encoding='utf-8') as metrics_file:
+    comparison_metrics = json.load(metrics_file)
 
 @app.route('/')
 def home():
@@ -59,7 +61,8 @@ def home():
                          crop_symptom_map=crop_symptom_map,
                          symptom_status_options=symptom_status_options,
                          severity_options=severity_options,
-                         disease_classes=disease_classes)
+                         disease_classes=disease_classes,
+                         comparison_metrics=comparison_metrics)
 
 @app.route('/predict', methods=['POST'])
 def predict():

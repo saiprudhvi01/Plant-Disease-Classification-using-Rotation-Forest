@@ -1,0 +1,30 @@
+{
+  "dataset": "plant_disease_symptom_observations_18000.csv",
+  "features": [
+    "Coverage_Percent",
+    "Lesion_Area_Percent",
+    "Yellowing_Area_Percent",
+    "Necrosis_Area_Percent"
+  ],
+  "split": {
+    "train_rows": 14400,
+    "test_rows": 3600,
+    "test_size": 0.2,
+    "random_state": 42,
+    "stratified": true
+  },
+  "models": {
+    "SVM": {
+      "accuracy": 0.5736111111111111,
+      "accuracy_percent": 57.36,
+      "model_file": "svm_comparison_model.pkl",
+      "configuration": "RBF kernel, C=1.0"
+    },
+    "KNN": {
+      "accuracy": 0.5641666666666667,
+      "accuracy_percent": 56.42,
+      "model_file": "knn_comparison_model.pkl",
+      "configuration": "25 neighbors, uniform weights"
+    }
+  }
+}
