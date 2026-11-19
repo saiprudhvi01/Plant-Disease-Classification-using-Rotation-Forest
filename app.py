@@ -28,7 +28,8 @@ def init_history_db():
                 top_predictions_json TEXT NOT NULL,
                 manual_review INTEGER NOT NULL DEFAULT 0,
                 review_reason TEXT,
-                prediction_method TEXT NOT NULL DEFAULT 'rotation_forest'
+                prediction_method TEXT NOT NULL DEFAULT 'rotation_forest',
+                confidence REAL
             )
         ''')
         columns = {row[1] for row in connection.execute('PRAGMA table_info(prediction_history)')}
@@ -38,6 +39,8 @@ def init_history_db():
             connection.execute('ALTER TABLE prediction_history ADD COLUMN review_reason TEXT')
         if 'prediction_method' not in columns:
             connection.execute("ALTER TABLE prediction_history ADD COLUMN prediction_method TEXT NOT NULL DEFAULT 'rotation_forest'")
+        if 'confidence' not in columns:
+            connection.execute('ALTER TABLE prediction_history ADD COLUMN confidence REAL')
 
 
 init_history_db()
@@ -77,16 +80,17 @@ def home():
 
 def save_prediction(crop, symptoms, predicted_disease, top_predictions,
                     manual_review=False, review_reason=None,
-                    prediction_method='rotation_forest'):
+                    prediction_method='rotation_forest', confidence=None):
     created_at = datetime.now(timezone.utc).astimezone().isoformat(timespec='seconds')
     with sqlite3.connect(HISTORY_DB) as connection:
         cursor = connection.execute(
             '''INSERT INTO prediction_history
                (created_at, crop, symptoms_json, predicted_disease, top_predictions_json,
-                manual_review, review_reason, prediction_method)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                manual_review, review_reason, prediction_method, confidence)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
             (created_at, crop, json.dumps(symptoms), predicted_disease,
-             json.dumps(top_predictions), int(manual_review), review_reason, prediction_method)
+             json.dumps(top_predictions), int(manual_review), review_reason,
+             prediction_method, confidence)
         )
         return cursor.lastrowid, created_at
 
@@ -255,7 +259,8 @@ def predict():
             crop, symptoms, predicted_disease,
             [prediction['disease'] for prediction in top_3_predictions],
             manual_review=manual_review,
-            review_reason=review_reason
+            review_reason=review_reason,
+            confidence=confidence
         )
         result['prediction_id'] = prediction_id
         result['created_at'] = created_at
@@ -269,7 +274,7 @@ def predict():
 
 def history_rows(limit=None):
     query = '''SELECT id, created_at, crop, symptoms_json, predicted_disease, top_predictions_json,
-                      manual_review, review_reason, prediction_method
+                      manual_review, review_reason, prediction_method, confidence
                FROM prediction_history ORDER BY id DESC'''
     params = ()
     if limit is not None:
@@ -283,7 +288,7 @@ def history_rows(limit=None):
 def csv_report(records):
     output = StringIO()
     writer = csv.writer(output)
-    writer.writerow(['Prediction ID', 'Date', 'Crop', 'Selected Symptoms', 'Predicted Disease', 'Top 3 Diseases', 'Manual Review', 'Review / Result Note', 'Prediction Method'])
+    writer.writerow(['Prediction ID', 'Date', 'Crop', 'Selected Symptoms', 'Predicted Disease', 'Confidence', 'Top 3 Diseases', 'Manual Review', 'Review / Result Note', 'Prediction Method'])
     for record in records:
         symptoms = json.loads(record['symptoms_json'])
         top_predictions = json.loads(record['top_predictions_json'])
@@ -292,7 +297,9 @@ def csv_report(records):
         )
         writer.writerow([
             record['id'], record['created_at'], record['crop'], symptom_text,
-            record['predicted_disease'], '; '.join(top_predictions),
+            record['predicted_disease'],
+            f"{record['confidence'] * 100:.2f}%" if record['confidence'] is not None else 'N/A — rule-based result',
+            '; '.join(top_predictions),
             'Yes' if record['manual_review'] else 'No',
             record['review_reason'] or '', record['prediction_method']
         ])
@@ -313,7 +320,8 @@ def get_history():
             'top_predictions': json.loads(record['top_predictions_json']),
             'manual_review': bool(record['manual_review']),
             'review_reason': record['review_reason'],
-            'prediction_method': record['prediction_method']
+            'prediction_method': record['prediction_method'],
+            'confidence': record['confidence']
         } for record in records]
     })
 

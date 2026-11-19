@@ -574,6 +574,8 @@
         .history-entry-title { color: var(--text-primary); font-weight: 700; overflow-wrap: anywhere; }
         .history-entry-meta { margin-top: 4px; color: var(--text-secondary); font-size: .9rem; }
         .prediction-flag { margin: 14px 0 18px; padding: 13px 15px; border: 1px solid var(--border); border-radius: 13px; color: var(--text-primary); background: rgba(16,185,129,.12); font-weight: 600; }
+        .result-confidence { margin: 10px 0 16px; color: var(--text-secondary); font-size: 1rem; }
+        .result-confidence strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
         .prediction-flag.manual-review { color: #7F1D1D; border-color: #FDA4AF; background: rgba(251,113,133,.16); }
         [data-theme="dark"] .prediction-flag.manual-review { color: #FFE4E6; border-color: rgba(251,113,133,.55); }
         .history-review, .history-rule-note { display: inline-block; margin-top: 6px; padding: 3px 8px; border-radius: 999px; font-size: .78rem; font-weight: 700; }
@@ -806,6 +808,7 @@
                 <div class="result-card" id="resultCard">
                     <div class="result-header">Predicted Disease</div>
                     <div class="result-disease" id="predictedDisease">-</div>
+                    <div class="result-confidence">Confidence: <strong id="confidenceScore">-</strong></div>
                     <div class="prediction-flag" id="predictionFlag" role="status" hidden></div>
                     <div class="top-predictions">
                         <h3>Top 3 Predictions</h3>
@@ -1034,7 +1037,10 @@
                     meta.className = 'history-entry-meta';
                     const date = new Date(entry.created_at).toLocaleString();
                     const symptomNames = entry.symptoms.map(symptom => symptom.name).join(', ');
-                    meta.textContent = `${date} · ${symptomNames}`;
+                    const confidenceText = Number.isFinite(entry.confidence)
+                        ? `${(entry.confidence * 100).toFixed(2)}%`
+                        : 'N/A — rule-based result';
+                    meta.textContent = `${date} · ${symptomNames} · Confidence: ${confidenceText}`;
                     if (entry.manual_review) {
                         const review = document.createElement('div');
                         review.className = 'history-review';
@@ -1121,6 +1127,9 @@
                     window.setTimeout(() => resultCard.classList.remove('analyzing'), 1250);
                     
                     document.getElementById('predictedDisease').textContent = data.predicted_disease;
+                    document.getElementById('confidenceScore').textContent = Number.isFinite(data.confidence)
+                        ? `${(data.confidence * 100).toFixed(2)}%`
+                        : 'N/A — rule-based result';
                     const predictionFlag = document.getElementById('predictionFlag');
                     predictionFlag.hidden = !data.manual_review && data.prediction_method !== 'zero_area_healthy_rule';
                     predictionFlag.classList.toggle('manual-review', Boolean(data.manual_review));

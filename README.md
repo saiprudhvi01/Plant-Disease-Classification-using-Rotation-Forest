@@ -51,7 +51,7 @@ The main dataset contains 18,000 observations, 12 disease labels, and 6 crops. E
 
 The crop selector filters the symptom choices using crop/symptom pairs from this dataset. During inference, the app builds one model input for each selected symptom with a positive affected-area percentage. It uses a matching crop/symptom row as a template for severity and leaf-area fields, replaces the coverage percentage with the user's value, predicts each symptom row, then averages the probability vectors to rank the final diseases. If every selected symptom has 0% affected area, the app applies an explicit rule-based `Healthy` result and skips model inference; no model confidence is assigned to that result. Zero-area symptoms are omitted from inference when other selected symptoms have positive coverage.
 
-Model probabilities are not artificially raised. If the highest averaged probability is below 60%, the result is marked for manual review in the results panel, saved history, and CSV report. This is a raw model probability threshold, not a separately calibrated confidence estimate.
+Model probabilities are not artificially raised. The displayed confidence is the highest averaged probability after restricting and renormalizing to the selected crop's disease classes. If it is below 60%, the result is marked for manual review in the results panel, saved history, and CSV report. This is a raw model probability threshold, not a separately calibrated confidence estimate. For the all-zero Healthy rule, no model probability is calculated and confidence is shown as N/A.
 
 The classifier is trained across all 12 disease classes, then inference restricts and renormalizes the final ranking to the diseases associated with the selected crop. For example, Apple results can only be Apple Scab or Cedar Apple Rust. The reported confidence is conditional on the selected crop's disease classes, not across every crop in the dataset.
 
@@ -122,7 +122,7 @@ Open `http://127.0.0.1:5000/` in a browser. The app reads model artifacts and th
 | `GET /history/<prediction_id>/report.csv` | Downloads one prediction as CSV |
 | `POST /batch_predict` | Accepts a CSV upload containing the model's feature columns and returns batch predictions |
 
-Downloaded prediction reports contain the date, crop, selected symptoms and affected-area percentages, predicted disease, top-three disease names, prediction method, and manual-review status/reason. Confidence values are not included in the UI history or CSV reports.
+Downloaded prediction reports contain the date, crop, selected symptoms and affected-area percentages, predicted disease, confidence, top-three disease names, prediction method, and manual-review status/reason. Rule-based Healthy results show confidence as N/A.
 
 ## Render deployment
 
