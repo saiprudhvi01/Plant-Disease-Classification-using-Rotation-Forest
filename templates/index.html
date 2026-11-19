@@ -573,6 +573,13 @@
         .history-entry-copy { min-width: 0; }
         .history-entry-title { color: var(--text-primary); font-weight: 700; overflow-wrap: anywhere; }
         .history-entry-meta { margin-top: 4px; color: var(--text-secondary); font-size: .9rem; }
+        .prediction-flag { margin: 14px 0 18px; padding: 13px 15px; border: 1px solid var(--border); border-radius: 13px; color: var(--text-primary); background: rgba(16,185,129,.12); font-weight: 600; }
+        .prediction-flag.manual-review { color: #7F1D1D; border-color: #FDA4AF; background: rgba(251,113,133,.16); }
+        [data-theme="dark"] .prediction-flag.manual-review { color: #FFE4E6; border-color: rgba(251,113,133,.55); }
+        .history-review, .history-rule-note { display: inline-block; margin-top: 6px; padding: 3px 8px; border-radius: 999px; font-size: .78rem; font-weight: 700; }
+        .history-review { color: #9F1239; background: rgba(251,113,133,.16); }
+        .history-rule-note { color: var(--text-secondary); background: var(--accent3); }
+        [data-theme="dark"] .history-review { color: #FFE4E6; }
         .history-entry .download-report { width: auto; margin-top: 0; flex: 0 0 auto; }
         .history-empty { color: var(--text-secondary); }
         @media (max-width: 620px) {
@@ -799,6 +806,7 @@
                 <div class="result-card" id="resultCard">
                     <div class="result-header">Predicted Disease</div>
                     <div class="result-disease" id="predictedDisease">-</div>
+                    <div class="prediction-flag" id="predictionFlag" role="status" hidden></div>
                     <div class="top-predictions">
                         <h3>Top 3 Predictions</h3>
                         <div id="topPredictions"></div>
@@ -1027,11 +1035,23 @@
                     const date = new Date(entry.created_at).toLocaleString();
                     const symptomNames = entry.symptoms.map(symptom => symptom.name).join(', ');
                     meta.textContent = `${date} · ${symptomNames}`;
+                    if (entry.manual_review) {
+                        const review = document.createElement('div');
+                        review.className = 'history-review';
+                        review.textContent = 'Manual review recommended';
+                        copy.append(title, meta, review);
+                    } else if (entry.prediction_method === 'zero_area_healthy_rule') {
+                        const note = document.createElement('div');
+                        note.className = 'history-rule-note';
+                        note.textContent = 'Rule-based healthy result (0% affected area)';
+                        copy.append(title, meta, note);
+                    } else {
+                        copy.append(title, meta);
+                    }
                     const download = document.createElement('a');
                     download.className = 'download-report';
                     download.href = `/history/${entry.id}/report.csv`;
                     download.textContent = 'Download CSV';
-                    copy.append(title, meta);
                     row.append(copy, download);
                     historyList.append(row);
                 });
@@ -1101,6 +1121,12 @@
                     window.setTimeout(() => resultCard.classList.remove('analyzing'), 1250);
                     
                     document.getElementById('predictedDisease').textContent = data.predicted_disease;
+                    const predictionFlag = document.getElementById('predictionFlag');
+                    predictionFlag.hidden = !data.manual_review && data.prediction_method !== 'zero_area_healthy_rule';
+                    predictionFlag.classList.toggle('manual-review', Boolean(data.manual_review));
+                    predictionFlag.textContent = data.manual_review
+                        ? `Manual review recommended: ${data.review_reason}`
+                        : data.review_reason || '';
                     downloadReport.href = `/history/${data.prediction_id}/report.csv`;
                     downloadReport.hidden = false;
                     const healthy = /healthy/i.test(data.predicted_disease);
@@ -1108,6 +1134,7 @@
                     
                     const topPredictions = document.getElementById('topPredictions');
                     topPredictions.replaceChildren();
+                    topPredictions.closest('.top-predictions').hidden = data.top_3_predictions.length === 0;
                     data.top_3_predictions.forEach((pred, index) => {
                         const row = document.createElement('div');
                         row.className = 'prediction-item';
