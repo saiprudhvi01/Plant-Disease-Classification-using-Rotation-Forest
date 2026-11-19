@@ -3,3 +3,4 @@ __pycache__/
 prediction_history.db
 predictions_with_rotation_forest.csv
 crop_disease_remediation.csv
+evaluation_reports/

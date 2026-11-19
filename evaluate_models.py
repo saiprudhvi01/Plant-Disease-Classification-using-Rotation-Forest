@@ -16,6 +16,7 @@ from sklearn.model_selection import train_test_split
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(ROOT, 'plant_disease_symptom_observations_18000.csv')
+REPORT_DIR = os.path.join(ROOT, 'evaluation_reports')
 FEATURE_COLUMNS = [
     'Crop',
     'Symptom_Name',
@@ -63,36 +64,58 @@ def main():
     svm_predictions = svm.predict(X_test[NUMERIC_COLUMNS])
     knn_predictions = knn.predict(X_test[NUMERIC_COLUMNS])
     predictions = {
-        'Rotation Forest (8 features)': rotation_predictions,
-        'SVM baseline (4 numeric features)': svm_predictions,
-        'KNN baseline (4 numeric features)': knn_predictions,
+        'Rotation Forest (8 features)': ('rotation_forest', rotation_predictions),
+        'SVM baseline (4 numeric features)': ('svm_baseline', svm_predictions),
+        'KNN baseline (4 numeric features)': ('knn_baseline', knn_predictions),
     }
 
     disease_names = target_encoder.classes_
     print(f'\nDataset: {os.path.basename(DATA_FILE)} ({len(data):,} rows)')
     print(f'Test set: {len(y_test):,} rows; stratified 80/20 split, random_state=42')
-    print('Macro metrics weight each disease class equally; weighted metrics account for class support.')
+    print('Macro scores weight every disease equally; weighted scores account for class size.')
 
-    for model_name, predicted in predictions.items():
-        print('\n' + '=' * 88)
-        print(model_name)
-        print('-' * 88)
-        print(f'Accuracy:          {accuracy_score(y_test, predicted) * 100:7.2f}%')
-        print(f'Precision (macro): {precision_score(y_test, predicted, average="macro", zero_division=0) * 100:7.2f}%')
-        print(f'Recall (macro):    {recall_score(y_test, predicted, average="macro", zero_division=0) * 100:7.2f}%')
-        print(f'F1 (macro):        {f1_score(y_test, predicted, average="macro", zero_division=0) * 100:7.2f}%')
-        print(f'Precision (weighted): {precision_score(y_test, predicted, average="weighted", zero_division=0) * 100:7.2f}%')
-        print(f'Recall (weighted):    {recall_score(y_test, predicted, average="weighted", zero_division=0) * 100:7.2f}%')
-        print(f'F1 (weighted):        {f1_score(y_test, predicted, average="weighted", zero_division=0) * 100:7.2f}%')
-
+    os.makedirs(REPORT_DIR, exist_ok=True)
+    metric_rows = []
+    for model_name, (file_prefix, predicted) in predictions.items():
+        metric_rows.append({
+            'Model': model_name,
+            'Accuracy (%)': accuracy_score(y_test, predicted) * 100,
+            'Precision macro (%)': precision_score(y_test, predicted, average='macro', zero_division=0) * 100,
+            'Recall macro (%)': recall_score(y_test, predicted, average='macro', zero_division=0) * 100,
+            'F1 macro (%)': f1_score(y_test, predicted, average='macro', zero_division=0) * 100,
+            'Precision weighted (%)': precision_score(y_test, predicted, average='weighted', zero_division=0) * 100,
+            'Recall weighted (%)': recall_score(y_test, predicted, average='weighted', zero_division=0) * 100,
+            'F1 weighted (%)': f1_score(y_test, predicted, average='weighted', zero_division=0) * 100,
+        })
         matrix = confusion_matrix(y_test, predicted, labels=range(len(disease_names)))
         matrix_frame = pd.DataFrame(matrix, index=disease_names, columns=disease_names)
-        matrix_frame.index.name = 'Actual \\ Predicted'
-        print('\nConfusion matrix (rows = actual, columns = predicted):')
-        print(matrix_frame.to_string())
+        matrix_frame.index.name = 'Actual disease'
+        matrix_frame.to_csv(os.path.join(REPORT_DIR, f'{file_prefix}_confusion_matrix.csv'))
 
-    print('\nComparison note: SVM and KNN intentionally use only four numeric leaf-area features;')
-    print('Rotation Forest uses all eight features, so this is not a feature-parity comparison.')
+    summary = pd.DataFrame(metric_rows)
+    summary.to_csv(os.path.join(REPORT_DIR, 'model_metrics_summary.csv'), index=False, float_format='%.2f')
+
+    columns = [
+        ('Model', 38, None),
+        ('Accuracy %', 12, 'Accuracy (%)'),
+        ('Precision %', 12, 'Precision macro (%)'),
+        ('Recall %', 12, 'Recall macro (%)'),
+        ('F1 %', 12, 'F1 macro (%)'),
+    ]
+    print('\nMODEL METRICS (MACRO AVERAGE)')
+    print(' | '.join(title.ljust(width) for title, width, _ in columns))
+    print('-+-'.join('-' * width for _, width, _ in columns))
+    for row in metric_rows:
+        values = [row['Model']] + [f"{row[key]:.2f}" for _, _, key in columns[1:]]
+        print(' | '.join(value.ljust(width) if index == 0 else value.rjust(width)
+                          for index, (value, (_, width, _)) in enumerate(zip(values, columns)))
+              )
+
+    print('\nCONFUSION MATRICES')
+    print(f'Full matrices saved as separate CSV files in: {REPORT_DIR}')
+    print(f'Macro and weighted metrics saved to: {os.path.join(REPORT_DIR, "model_metrics_summary.csv")}')
+    print('Rows are actual diseases; columns are predicted diseases.')
+    print('\nComparison note: SVM and KNN use four numeric features; Rotation Forest uses all eight.')
     print('These are same-dataset holdout metrics, not cross-dataset validation results.')
 
 
