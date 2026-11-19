@@ -26,7 +26,7 @@ Dependency versions are listed in [`requirements.txt`](requirements.txt). The pr
 | `retrain_model.py` | Main Rotation Forest training and evaluation script |
 | `rotation_forest_model.py` | Earlier, self-contained training experiment; not needed to run the app |
 | `train_comparison_models.py` | Trains the SVM and KNN comparison baselines |
-| `evaluate_models.py` | Prints accuracy, precision, recall, F1, and confusion matrices for all three saved models |
+| `evaluate_models.py` | Generates model-comparison and confusion-matrix graphs and prints evaluation metrics |
 | `plant_disease_symptom_observations_18000.csv` | Main labeled training and symptom lookup dataset |
 | `rotation_forest_model.pkl` | Saved Rotation Forest model loaded by the app |
 | `scaler.pkl` | Saved standardization transform for the Rotation Forest features |
@@ -101,7 +101,7 @@ To print an aligned side-by-side metrics table and create separate CSV files for
 python evaluate_models.py
 ```
 
-The script evaluates the saved model artifacts on the deterministic stratified 20% holdout and prints an aligned table of macro precision, recall, and F1 alongside accuracy. The metrics summary CSV includes both macro and weighted scores. SVM/KNN use their four numeric features; Rotation Forest uses all eight features. It writes `model_metrics_summary.csv` and one labeled confusion-matrix CSV per model under `evaluation_reports/` so the matrices can be opened cleanly in a spreadsheet.
+The script evaluates the saved model artifacts on the deterministic stratified 20% holdout and generates a model-metrics bar chart plus one confusion-matrix heatmap per model. It also prints a compact metrics table and saves the underlying numbers as CSV files. SVM/KNN use their four numeric features; Rotation Forest uses all eight features. Graphs and CSV files are written under `evaluation_reports/`.
 
 ## Install and run locally
 

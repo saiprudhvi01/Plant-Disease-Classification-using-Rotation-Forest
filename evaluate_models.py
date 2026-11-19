@@ -3,6 +3,10 @@
 import os
 
 import joblib
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from sklearn.metrics import (
     accuracy_score,
@@ -34,6 +38,92 @@ NUMERIC_COLUMNS = [
     'Necrosis_Area_Percent',
 ]
 CATEGORICAL_COLUMNS = ['Crop', 'Symptom_Name', 'Symptom_Status', 'Severity']
+
+
+def save_metric_chart(metric_rows):
+    metric_names = ['Accuracy', 'Precision', 'Recall', 'F1']
+    metric_keys = ['Accuracy (%)', 'Precision macro (%)', 'Recall macro (%)', 'F1 macro (%)']
+    x_positions = np.arange(len(metric_names))
+    width = 0.23
+    colors = ['#15803D', '#2563EB', '#D97706']
+    legend_handles = []
+
+    fig, ax = plt.subplots(figsize=(10, 5.5))
+    for model_index, row in enumerate(metric_rows):
+        values = [row[key] for key in metric_keys]
+        bars = ax.bar(
+            x_positions + (model_index - 1) * width,
+            values,
+            width,
+            label=row['Model'],
+            color=colors[model_index],
+            edgecolor='white',
+            linewidth=0.8,
+        )
+        legend_handles.append(bars)
+        ax.bar_label(bars, fmt='%.1f', padding=2, fontsize=8)
+
+    fig.suptitle('Model Comparison on the Same Test Set', fontsize=14, weight='bold', y=0.99)
+    ax.set_ylabel('Score (%)')
+    ax.set_xticks(x_positions, metric_names)
+    ax.set_ylim(0, 112)
+    ax.set_yticks(np.arange(0, 101, 20))
+    ax.grid(axis='y', linestyle='--', alpha=0.3)
+    ax.set_axisbelow(True)
+    ax.spines[['top', 'right']].set_visible(False)
+    fig.legend(
+        handles=legend_handles,
+        labels=[row['Model'] for row in metric_rows],
+        frameon=False,
+        ncol=3,
+        loc='upper center',
+        bbox_to_anchor=(0.5, 0.93),
+        fontsize=8,
+    )
+    fig.text(
+        0.5, 0.01,
+        'SVM and KNN use four numeric features; Rotation Forest uses all eight.',
+        ha='center', fontsize=8, color='#555555'
+    )
+    fig.tight_layout(rect=(0, 0.05, 1, 0.84))
+    output_path = os.path.join(REPORT_DIR, 'model_metrics_comparison.png')
+    fig.savefig(output_path, dpi=180, bbox_inches='tight')
+    plt.close(fig)
+    return output_path
+
+
+def save_confusion_matrix_chart(matrix, disease_names, title, file_prefix):
+    crop_codes = {'Apple': 'A', 'Corn (Maize)': 'Corn', 'Grape': 'G', 'Potato': 'P', 'Squash': 'Sq', 'Tomato': 'T'}
+    short_names = []
+    for name in disease_names:
+        crop, disease = name.split(' - ', 1)
+        short_names.append(f'{crop_codes.get(crop, crop)}: {disease}')
+    fig, ax = plt.subplots(figsize=(12, 9))
+    image = ax.imshow(matrix, cmap='Greens', interpolation='nearest')
+    fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04, label='Number of samples')
+    ax.set_title(f'{title}\nConfusion Matrix', fontsize=14, weight='bold', pad=14)
+    ax.set_xlabel('Predicted disease')
+    ax.set_ylabel('Actual disease')
+    ax.set_xticks(np.arange(len(short_names)), short_names, rotation=55, ha='right', fontsize=8)
+    ax.set_yticks(np.arange(len(short_names)), short_names, fontsize=8)
+
+    threshold = matrix.max() / 2 if matrix.size else 0
+    for row_index in range(matrix.shape[0]):
+        for column_index in range(matrix.shape[1]):
+            count = int(matrix[row_index, column_index])
+            if count:
+                ax.text(
+                    column_index, row_index, str(count),
+                    ha='center', va='center',
+                    color='white' if count > threshold else '#17301F',
+                    fontsize=8,
+                )
+
+    fig.tight_layout()
+    output_path = os.path.join(REPORT_DIR, f'{file_prefix}_confusion_matrix.png')
+    fig.savefig(output_path, dpi=180, bbox_inches='tight')
+    plt.close(fig)
+    return output_path
 
 
 def main():
@@ -91,9 +181,11 @@ def main():
         matrix_frame = pd.DataFrame(matrix, index=disease_names, columns=disease_names)
         matrix_frame.index.name = 'Actual disease'
         matrix_frame.to_csv(os.path.join(REPORT_DIR, f'{file_prefix}_confusion_matrix.csv'))
+        save_confusion_matrix_chart(matrix, disease_names, model_name, file_prefix)
 
     summary = pd.DataFrame(metric_rows)
     summary.to_csv(os.path.join(REPORT_DIR, 'model_metrics_summary.csv'), index=False, float_format='%.2f')
+    metric_chart_path = save_metric_chart(metric_rows)
 
     columns = [
         ('Model', 38, None),
@@ -112,7 +204,8 @@ def main():
               )
 
     print('\nCONFUSION MATRICES')
-    print(f'Full matrices saved as separate CSV files in: {REPORT_DIR}')
+    print(f'Comparison chart: {metric_chart_path}')
+    print(f'Confusion-matrix graphs and CSVs: {REPORT_DIR}')
     print(f'Macro and weighted metrics saved to: {os.path.join(REPORT_DIR, "model_metrics_summary.csv")}')
     print('Rows are actual diseases; columns are predicted diseases.')
     print('\nComparison note: SVM and KNN use four numeric features; Rotation Forest uses all eight.')
