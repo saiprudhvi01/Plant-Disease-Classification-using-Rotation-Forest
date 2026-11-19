@@ -213,7 +213,7 @@ def predict():
                 'probability': float(avg_probability[idx])
             })
         
-        manual_review = confidence < 0.60
+        manual_review = bool(confidence < 0.60)
         review_reason = (
             'Model confidence is below 60%; please review this prediction manually.'
             if manual_review else None
