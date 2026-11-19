@@ -196,21 +196,43 @@ def predict():
         if not all_predictions:
             return jsonify({'success': False, 'error': 'Could not match symptoms to training data'})
         
-        # Average the probabilities from all symptoms
+        # Average the probabilities from all positive-area symptoms.
         avg_probability = np.mean(all_probabilities, axis=0)
-        final_prediction = np.argmax(avg_probability)
-        confidence = np.max(avg_probability)
+        # Restrict the ranked labels to diseases associated with the selected crop.
+        crop_class_indices = np.array([
+            index for index, disease in enumerate(target_encoder.classes_)
+            if disease.startswith(f'{crop} - ')
+        ], dtype=int)
+        if crop_class_indices.size == 0:
+            return jsonify({
+                'success': False,
+                'error': f'No disease classes are available for crop: {crop}'
+            })
+
+        crop_probabilities = avg_probability[crop_class_indices]
+        crop_probability_total = float(crop_probabilities.sum())
+        if crop_probability_total <= 0:
+            return jsonify({
+                'success': False,
+                'error': 'The model did not assign probability to diseases for this crop; please review manually.'
+            })
+        crop_probabilities = crop_probabilities / crop_probability_total
+        final_crop_index = int(np.argmax(crop_probabilities))
+        final_prediction = crop_class_indices[final_crop_index]
+        confidence = float(crop_probabilities[final_crop_index])
         
         # Decode prediction
         predicted_disease = target_encoder.inverse_transform([final_prediction])[0]
         
         # Get top 3 predictions with probabilities
-        top_3_indices = np.argsort(avg_probability)[-3:][::-1]
+        top_count = min(3, len(crop_class_indices))
+        top_3_local_indices = np.argsort(crop_probabilities)[-top_count:][::-1]
         top_3_predictions = []
-        for idx in top_3_indices:
+        for local_idx in top_3_local_indices:
+            idx = crop_class_indices[local_idx]
             top_3_predictions.append({
                 'disease': target_encoder.inverse_transform([idx])[0],
-                'probability': float(avg_probability[idx])
+                'probability': float(crop_probabilities[local_idx])
             })
         
         manual_review = bool(confidence < 0.60)

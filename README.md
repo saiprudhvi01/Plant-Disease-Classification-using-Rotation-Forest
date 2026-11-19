@@ -53,7 +53,7 @@ The crop selector filters the symptom choices using crop/symptom pairs from this
 
 Model probabilities are not artificially raised. If the highest averaged probability is below 60%, the result is marked for manual review in the results panel, saved history, and CSV report. This is a raw model probability threshold, not a separately calibrated confidence estimate.
 
-The classifier ranks all 12 disease classes. The current inference code does not restrict final disease labels to the selected crop, so a disease associated with another crop can appear in the top three.
+The classifier is trained across all 12 disease classes, then inference restricts and renormalizes the final ranking to the diseases associated with the selected crop. For example, Apple results can only be Apple Scab or Cedar Apple Rust. The reported confidence is conditional on the selected crop's disease classes, not across every crop in the dataset.
 
 ## Main model training steps
 
