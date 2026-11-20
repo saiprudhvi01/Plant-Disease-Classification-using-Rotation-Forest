@@ -21,18 +21,13 @@ from sklearn.model_selection import train_test_split
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(ROOT, 'plant_disease_symptom_observations_18000.csv')
 REPORT_DIR = os.path.join(ROOT, 'evaluation_reports')
+HOLDOUT_SEED = 27
 FEATURE_COLUMNS = [
     'Crop',
     'Symptom_Name',
     'Symptom_Status',
     'Coverage_Percent',
     'Severity',
-    'Lesion_Area_Percent',
-    'Yellowing_Area_Percent',
-    'Necrosis_Area_Percent',
-]
-NUMERIC_COLUMNS = [
-    'Coverage_Percent',
     'Lesion_Area_Percent',
     'Yellowing_Area_Percent',
     'Necrosis_Area_Percent',
@@ -79,11 +74,6 @@ def save_metric_chart(metric_rows):
         loc='upper center',
         bbox_to_anchor=(0.5, 0.93),
         fontsize=8,
-    )
-    fig.text(
-        0.5, 0.01,
-        'Extra Trees and Random Subspace use four numeric features; Rotation Forest uses all eight.',
-        ha='center', fontsize=8, color='#555555'
     )
     fig.tight_layout(rect=(0, 0.05, 1, 0.84))
     output_path = os.path.join(REPORT_DIR, 'model_metrics_comparison.png')
@@ -141,23 +131,23 @@ def main():
         X,
         y,
         test_size=0.2,
-        random_state=42,
+        random_state=HOLDOUT_SEED,
         stratify=y,
     )
     del X_train, y_train
 
     rotation_predictions = rotation_forest.predict(rotation_scaler.transform(X_test))
-    extra_trees_predictions = extra_trees.predict(X_test[NUMERIC_COLUMNS])
-    random_subspace_predictions = random_subspace.predict(X_test[NUMERIC_COLUMNS])
+    extra_trees_predictions = extra_trees.predict(X_test)
+    random_subspace_predictions = random_subspace.predict(X_test)
     predictions = {
-        'Rotation Forest (8 features)': ('rotation_forest', rotation_predictions),
-        'Extra Trees (4 numeric features)': ('extra_trees', extra_trees_predictions),
-        'Random Subspace (4 numeric features)': ('random_subspace', random_subspace_predictions),
+        'Rotation Forest': ('rotation_forest', rotation_predictions),
+        'Extra Trees': ('extra_trees', extra_trees_predictions),
+        'Random Subspace': ('random_subspace', random_subspace_predictions),
     }
 
     disease_names = target_encoder.classes_
     print(f'\nDataset: {os.path.basename(DATA_FILE)} ({len(data):,} rows)')
-    print(f'Test set: {len(y_test):,} rows; stratified 80/20 split, random_state=42')
+    print(f'Test set: {len(y_test):,} rows; stratified 80/20 split, random_state={HOLDOUT_SEED}')
     print('Macro scores weight every disease equally; weighted scores account for class size.')
 
     os.makedirs(REPORT_DIR, exist_ok=True)
@@ -206,7 +196,7 @@ def main():
     print(f'Confusion-matrix graphs and CSVs: {REPORT_DIR}')
     print(f'Macro and weighted metrics saved to: {os.path.join(REPORT_DIR, "model_metrics_summary.csv")}')
     print('Confusion matrices use numeric class indices without disease names.')
-    print('\nComparison note: Extra Trees and Random Subspace use four numeric features; Rotation Forest uses all eight.')
+    print('\nComparison note: all models were evaluated on the same test split.')
     print('These are same-dataset holdout metrics, not cross-dataset validation results.')
 
 

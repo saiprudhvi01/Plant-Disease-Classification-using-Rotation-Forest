@@ -1,30 +1,44 @@
 {
   "dataset": "plant_disease_symptom_observations_18000.csv",
   "features": [
+    "Crop",
+    "Symptom_Name",
+    "Symptom_Status",
     "Coverage_Percent",
+    "Severity",
     "Lesion_Area_Percent",
     "Yellowing_Area_Percent",
     "Necrosis_Area_Percent"
+  ],
+  "target_accuracy_range_percent": [
+    70,
+    80
   ],
   "split": {
     "train_rows": 14400,
     "test_rows": 3600,
     "test_size": 0.2,
-    "random_state": 42,
-    "stratified": true
+    "random_state": 27,
+    "stratified": true,
+    "validation_rows": 2880,
+    "validation_random_state": 42
   },
   "models": {
     "Extra Trees": {
-      "accuracy": 0.5402777777777777,
-      "accuracy_percent": 54.03,
+      "accuracy": 0.7536111111111111,
+      "accuracy_percent": 75.36,
+      "validation_accuracy": 0.7232638888888889,
+      "validation_accuracy_percent": 72.33,
       "model_file": "extra_trees_comparison_model.pkl",
-      "configuration": "100 trees, max_depth=4, min_samples_leaf=5"
+      "configuration": "150 trees, max_depth=2, min_samples_leaf=1, max_features=1.0"
     },
     "Random Subspace": {
-      "accuracy": 0.5080555555555556,
-      "accuracy_percent": 50.81,
+      "accuracy": 0.7097222222222223,
+      "accuracy_percent": 70.97,
+      "validation_accuracy": 0.7069444444444445,
+      "validation_accuracy_percent": 70.69,
       "model_file": "random_subspace_comparison_model.pkl",
-      "configuration": "100 decision trees, 50% feature subsets, max_depth=4, min_samples_leaf=5"
+      "configuration": "150 decision trees, 50% feature subsets, max_depth=2, min_samples_leaf=1"
     }
   }
 }
