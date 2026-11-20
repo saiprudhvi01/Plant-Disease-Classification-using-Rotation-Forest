@@ -89,6 +89,7 @@ body::before{content:"";position:fixed;top:-140px;left:-120px;width:460px;height
 .symptom-item{border-radius:18px;border-width:1px}
 .symptom-item.active{border-color:var(--accent)}
 .btn{border-radius:999px;padding:15px 24px;font-size:1rem;box-shadow:none}
+.btn-primary{width:fit-content;min-width:180px;margin-left:auto;padding:10px 20px;font-size:.9rem;display:block}
 .btn::after{display:none}
 .btn-primary{color:var(--shell)}
 .result-card{background:#1B2A14;border:0;border-radius:22px;box-shadow:none}

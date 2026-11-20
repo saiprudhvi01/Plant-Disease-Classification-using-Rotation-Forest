@@ -107,7 +107,7 @@ To print an aligned side-by-side metrics table and create separate CSV files for
 python evaluate_models.py
 ```
 
-The script evaluates the saved model artifacts on the deterministic stratified 20% holdout and generates a model-metrics bar chart plus one confusion-matrix heatmap per model. It also prints a compact metrics table and saves the underlying numbers as CSV files. Extra Trees and Random Subspace use four numeric features; Rotation Forest uses all eight features. Graphs and CSV files are written under `evaluation_reports/`.
+The script evaluates the saved model artifacts on the deterministic stratified 20% holdout and generates a model-metrics bar chart plus one confusion-matrix heatmap per model. It also prints a compact metrics table and saves the underlying numbers as CSV files. Confusion matrices use numeric class indices rather than disease names. Extra Trees and Random Subspace use four numeric features; Rotation Forest uses all eight features. Graphs and CSV files are written under `evaluation_reports/`.
 
 ## Install and run locally
 

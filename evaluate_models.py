@@ -92,20 +92,16 @@ def save_metric_chart(metric_rows):
     return output_path
 
 
-def save_confusion_matrix_chart(matrix, disease_names, title, file_prefix):
-    crop_codes = {'Apple': 'A', 'Corn (Maize)': 'Corn', 'Grape': 'G', 'Potato': 'P', 'Squash': 'Sq', 'Tomato': 'T'}
-    short_names = []
-    for name in disease_names:
-        crop, disease = name.split(' - ', 1)
-        short_names.append(f'{crop_codes.get(crop, crop)}: {disease}')
+def save_confusion_matrix_chart(matrix, title, file_prefix):
+    class_indices = np.arange(1, matrix.shape[0] + 1)
     fig, ax = plt.subplots(figsize=(12, 9))
     image = ax.imshow(matrix, cmap='Greens', interpolation='nearest')
     fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04, label='Number of samples')
     ax.set_title(f'{title}\nConfusion Matrix', fontsize=14, weight='bold', pad=14)
-    ax.set_xlabel('Predicted disease')
-    ax.set_ylabel('Actual disease')
-    ax.set_xticks(np.arange(len(short_names)), short_names, rotation=55, ha='right', fontsize=8)
-    ax.set_yticks(np.arange(len(short_names)), short_names, fontsize=8)
+    ax.set_xlabel('Predicted class index')
+    ax.set_ylabel('Actual class index')
+    ax.set_xticks(np.arange(len(class_indices)), class_indices, fontsize=8)
+    ax.set_yticks(np.arange(len(class_indices)), class_indices, fontsize=8)
 
     threshold = matrix.max() / 2 if matrix.size else 0
     for row_index in range(matrix.shape[0]):
@@ -177,11 +173,13 @@ def main():
             'Recall weighted (%)': recall_score(y_test, predicted, average='weighted', zero_division=0) * 100,
             'F1 weighted (%)': f1_score(y_test, predicted, average='weighted', zero_division=0) * 100,
         })
-        matrix = confusion_matrix(y_test, predicted, labels=range(len(disease_names)))
-        matrix_frame = pd.DataFrame(matrix, index=disease_names, columns=disease_names)
-        matrix_frame.index.name = 'Actual disease'
+        class_indices = np.arange(len(disease_names))
+        matrix = confusion_matrix(y_test, predicted, labels=class_indices)
+        display_indices = np.arange(1, len(disease_names) + 1)
+        matrix_frame = pd.DataFrame(matrix, index=display_indices, columns=display_indices)
+        matrix_frame.index.name = 'Actual class index'
         matrix_frame.to_csv(os.path.join(REPORT_DIR, f'{file_prefix}_confusion_matrix.csv'))
-        save_confusion_matrix_chart(matrix, disease_names, model_name, file_prefix)
+        save_confusion_matrix_chart(matrix, model_name, file_prefix)
 
     summary = pd.DataFrame(metric_rows)
     summary.to_csv(os.path.join(REPORT_DIR, 'model_metrics_summary.csv'), index=False, float_format='%.2f')
@@ -207,7 +205,7 @@ def main():
     print(f'Comparison chart: {metric_chart_path}')
     print(f'Confusion-matrix graphs and CSVs: {REPORT_DIR}')
     print(f'Macro and weighted metrics saved to: {os.path.join(REPORT_DIR, "model_metrics_summary.csv")}')
-    print('Rows are actual diseases; columns are predicted diseases.')
+    print('Confusion matrices use numeric class indices without disease names.')
     print('\nComparison note: Extra Trees and Random Subspace use four numeric features; Rotation Forest uses all eight.')
     print('These are same-dataset holdout metrics, not cross-dataset validation results.')
 
