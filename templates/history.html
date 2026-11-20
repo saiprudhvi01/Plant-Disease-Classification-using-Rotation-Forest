@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Prediction History{% endblock %}
+{% block content %}
+<section class="hero hero-sm">
+    <h1 class="hero-title"><span>Prediction</span><span class="leaf-icon"><svg viewBox="0 0 48 48"><path d="M24 2c6 8 6 14 0 22-6-8-6-14 0-22Z"/><path d="M24 2c6 8 6 14 0 22-6-8-6-14 0-22Z" transform="rotate(90 24 24)"/><path d="M24 2c6 8 6 14 0 22-6-8-6-14 0-22Z" transform="rotate(180 24 24)"/><path d="M24 2c6 8 6 14 0 22-6-8-6-14 0-22Z" transform="rotate(270 24 24)"/></svg></span><span class="serif">History</span></h1>
+    <p class="hero-sub">Review saved crop observations and their disease predictions.</p>
+</section>
+
+<section class="card history-card" aria-labelledby="historyTitle">
+    <div class="history-heading">
+        <h2 class="section-title" id="historyTitle"><span class="icon-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5h6M9 10h6m-6 4h6m-6 4h3"/></svg></span>Saved predictions</h2>
+        <a class="download-history" href="{{ url_for('download_history_report') }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></svg>Download all (CSV)</a>
+    </div>
+
+    {% if history %}
+    <div class="history-list">
+        {% for record in history %}
+        <article class="history-entry">
+            <div class="history-entry-copy">
+                <div class="history-entry-title">{{ record.crop }} · {{ record.predicted_disease }}</div>
+                <div class="history-entry-meta">{{ record.created_at.replace('T', ' ') }} · Confidence:
+                    {% if record.confidence is not none %}{{ '%.2f'|format(record.confidence * 100) }}%{% else %}N/A (rule-based){% endif %}
+                </div>
+                <div class="history-entry-meta">Symptoms:
+                    {% for symptom in record.symptoms %}{{ symptom.name }} ({{ symptom.percentage }}%){% if not loop.last %}, {% endif %}{% else %}None{% endfor %}
+                </div>
+                {% if record.manual_review %}<span class="history-review">Manual review recommended</span>{% endif %}
+                {% if record.prediction_method == 'zero_area_healthy_rule' %}<span class="history-rule-note">Rule-based healthy result</span>{% endif %}
+            </div>
+            <a class="download-report" href="{{ url_for('download_prediction_report', prediction_id=record.id) }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></svg>Download CSV</a>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-result"><span class="icon-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5h6M9 10h6m-6 4h6"/></svg></span><p>No saved predictions yet.</p><a href="{{ url_for('home') }}">Start a prediction</a></div>
+    {% endif %}
+</section>
+{% endblock %}

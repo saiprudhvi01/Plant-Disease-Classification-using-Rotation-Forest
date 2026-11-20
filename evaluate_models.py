@@ -1,4 +1,4 @@
-"""Evaluate the saved Rotation Forest, SVM, and KNN models side by side."""
+"""Evaluate Rotation Forest, Extra Trees, and Random Subspace models."""
 
 import os
 
@@ -82,7 +82,7 @@ def save_metric_chart(metric_rows):
     )
     fig.text(
         0.5, 0.01,
-        'SVM and KNN use four numeric features; Rotation Forest uses all eight.',
+        'Extra Trees and Random Subspace use four numeric features; Rotation Forest uses all eight.',
         ha='center', fontsize=8, color='#555555'
     )
     fig.tight_layout(rect=(0, 0.05, 1, 0.84))
@@ -133,8 +133,8 @@ def main():
     target_encoder = joblib.load(os.path.join(ROOT, 'target_encoder.pkl'))
     rotation_scaler = joblib.load(os.path.join(ROOT, 'scaler.pkl'))
     rotation_forest = joblib.load(os.path.join(ROOT, 'rotation_forest_model.pkl'))
-    svm = joblib.load(os.path.join(ROOT, 'svm_comparison_model.pkl'))
-    knn = joblib.load(os.path.join(ROOT, 'knn_comparison_model.pkl'))
+    extra_trees = joblib.load(os.path.join(ROOT, 'extra_trees_comparison_model.pkl'))
+    random_subspace = joblib.load(os.path.join(ROOT, 'random_subspace_comparison_model.pkl'))
 
     X = data[FEATURE_COLUMNS].copy()
     for column in CATEGORICAL_COLUMNS:
@@ -151,12 +151,12 @@ def main():
     del X_train, y_train
 
     rotation_predictions = rotation_forest.predict(rotation_scaler.transform(X_test))
-    svm_predictions = svm.predict(X_test[NUMERIC_COLUMNS])
-    knn_predictions = knn.predict(X_test[NUMERIC_COLUMNS])
+    extra_trees_predictions = extra_trees.predict(X_test[NUMERIC_COLUMNS])
+    random_subspace_predictions = random_subspace.predict(X_test[NUMERIC_COLUMNS])
     predictions = {
         'Rotation Forest (8 features)': ('rotation_forest', rotation_predictions),
-        'SVM baseline (4 numeric features)': ('svm_baseline', svm_predictions),
-        'KNN baseline (4 numeric features)': ('knn_baseline', knn_predictions),
+        'Extra Trees (4 numeric features)': ('extra_trees', extra_trees_predictions),
+        'Random Subspace (4 numeric features)': ('random_subspace', random_subspace_predictions),
     }
 
     disease_names = target_encoder.classes_
@@ -208,7 +208,7 @@ def main():
     print(f'Confusion-matrix graphs and CSVs: {REPORT_DIR}')
     print(f'Macro and weighted metrics saved to: {os.path.join(REPORT_DIR, "model_metrics_summary.csv")}')
     print('Rows are actual diseases; columns are predicted diseases.')
-    print('\nComparison note: SVM and KNN use four numeric features; Rotation Forest uses all eight.')
+    print('\nComparison note: Extra Trees and Random Subspace use four numeric features; Rotation Forest uses all eight.')
     print('These are same-dataset holdout metrics, not cross-dataset validation results.')
 
 

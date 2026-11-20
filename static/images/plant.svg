@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 500" role="img" aria-label="Potted green plant">
+  <defs>
+    <linearGradient id="pot" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#87994D"/><stop offset="1" stop-color="#536B35"/></linearGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9BB765"/><stop offset="1" stop-color="#52783F"/></linearGradient>
+  </defs>
+  <ellipse cx="210" cy="453" rx="126" ry="20" fill="#6B7652" opacity=".16"/>
+  <path d="M210 340C206 272 210 197 211 112M211 246C177 207 147 181 110 162M211 275C251 229 282 206 319 190M210 188C196 144 180 111 159 82M211 154C229 114 251 88 278 66" fill="none" stroke="#557745" stroke-width="12" stroke-linecap="round"/>
+  <g fill="url(#leaf)" stroke="#526F3D" stroke-width="3">
+    <path d="M211 152C165 145 137 105 146 62c44 2 77 39 65 83Z"/>
+    <path d="M224 126C223 79 252 44 296 39c10 43-20 83-72 87Z"/>
+    <path d="M193 223c-48 10-89-13-101-56 40-20 85 1 101 56Z"/>
+    <path d="M228 238c17-47 60-69 103-53-11 44-52 68-103 53Z"/>
+    <path d="M203 291c-47 6-81-23-82-66 43-15 82 10 82 66Z"/>
+    <path d="M225 300c25-40 70-53 109-28-20 41-65 55-109 28Z"/>
+    <path d="M177 127c-45-14-66-54-48-95 44 7 69 45 48 95Z"/>
+  </g>
+  <g fill="none" stroke="#D5DCA9" stroke-width="3" opacity=".72">
+    <path d="M211 152 158 75M224 126l58-72M193 223l-83-56M228 238l91-47M203 291l-75-56M225 300l95-26M177 127l-41-80"/>
+  </g>
+  <path d="M124 337h172l-17 119H141Z" fill="url(#pot)"/>
+  <rect x="114" y="326" width="192" height="31" rx="10" fill="#758A46"/>
+  <path d="M143 367h132" stroke="#B7C58A" stroke-width="6" stroke-linecap="round" opacity=".4"/>
+</svg>

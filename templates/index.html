@@ -1,765 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plant Disease Prediction System</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            color-scheme: light;
-            --bg-primary: linear-gradient(135deg, #ECFDF5, #FEFCE8);
-            --bg-secondary: rgba(236, 253, 245, .78);
-            --bg-card: rgba(255, 255, 255, .72);
-            --primary: #16A34A;
-            --primary-dark: #15803D;
-            --secondary: #84CC16;
-            --accent: #10B981;
-            --accent2: #F97316;
-            --accent3: #BBF7D0;
-            --text-primary: #14532D;
-            --text-secondary: #4D7C5F;
-            --border: #BBF7D0;
-            --shadow: rgba(22, 163, 74, .15);
-            --gradient-start: #16A34A;
-            --gradient-end: #84CC16;
-            --glow: 0 8px 32px rgba(22, 163, 74, .15);
-        }
-
-        [data-theme="dark"] {
-            color-scheme: dark;
-            --bg-primary: linear-gradient(135deg, #052E16, #0B1120);
-            --bg-secondary: rgba(20, 50, 34, .72);
-            --bg-card: rgba(20, 40, 30, .68);
-            --primary: #34D399;
-            --primary-dark: #10B981;
-            --secondary: #A3E635;
-            --accent: #6EE7B7;
-            --accent2: #FBBF24;
-            --accent3: rgba(52, 211, 153, .22);
-            --text-primary: #ECFDF5;
-            --text-secondary: #A7C6B2;
-            --border: rgba(52, 211, 153, .25);
-            --shadow: rgba(52, 211, 153, .18);
-            --gradient-start: #34D399;
-            --gradient-end: #A3E635;
-            --glow: 0 0 32px rgba(52, 211, 153, .2);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            transition: background-color .5s ease, color .4s ease, border-color .5s ease, box-shadow .5s ease;
-        }
-
-        body {
-            font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
-            background: var(--bg-primary);
-            background-attachment: fixed;
-            min-height: 100vh;
-            padding: 20px;
-            color: var(--text-primary);
-            position: relative;
-            isolation: isolate;
-            overflow-x: hidden;
-        }
-
-        .splash-screen {
-            position: fixed;
-            inset: 0;
-            z-index: 3000;
-            display: grid;
-            place-items: center;
-            padding: 24px;
-            color: var(--text-primary);
-            background: var(--bg-primary);
-            transition: opacity .5s ease, visibility .5s ease;
-        }
-        .splash-screen.is-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-        .splash-content { text-align: center; animation: splash-rise .75s cubic-bezier(.2,.8,.2,1) both; }
-        .splash-leaf { display: block; font-size: 4rem; line-height: 1.2; animation: splash-sway 1.8s ease-in-out infinite alternate; }
-        .splash-title { margin-top: 14px; font-size: clamp(1.25rem, 4vw, 1.8rem); font-weight: 700; }
-        .splash-caption { margin-top: 8px; color: var(--text-secondary); font-size: .95rem; }
-        .splash-track { width: min(220px, 65vw); height: 5px; margin: 24px auto 0; overflow: hidden; border-radius: 99px; background: var(--border); }
-        .splash-progress { width: 100%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--primary), var(--secondary)); transform: scaleX(0); transform-origin: left; animation: splash-progress 5s linear forwards; }
-        @keyframes splash-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes splash-sway { to { transform: rotate(12deg) translateY(-5px); } }
-        @keyframes splash-progress { to { transform: scaleX(1); } }
-
-        .ambient-particles {
-            position: fixed;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            pointer-events: none;
-            overflow: visible;
-        }
-
-        .ambient-particles circle { filter: drop-shadow(0 0 7px var(--primary)); }
-        [data-theme="dark"] .ambient-particles circle { opacity: .3; filter: drop-shadow(0 0 9px #34D399); }
-        .ambient-blob { position: fixed; z-index: -1; width: 340px; aspect-ratio: 1; border-radius: 50%; filter: blur(85px); opacity: .22; pointer-events: none; background: var(--secondary); animation: blob-float 20s ease-in-out infinite alternate; }
-        .ambient-blob.one { top: 5%; left: -130px; }
-        .ambient-blob.two { top: 48%; right: -170px; background: var(--accent); animation-delay: -7s; }
-        .ambient-blob.three { bottom: -220px; left: 38%; background: var(--primary); animation-delay: -13s; }
-        @keyframes blob-float { to { transform: translate(36px, -42px) scale(1.12); } }
-
-        .ambient-particles circle {
-            fill: var(--primary);
-            opacity: 0.18;
-            transform-box: fill-box;
-            transform-origin: center;
-            animation: particle-drift 12s ease-in-out infinite alternate;
-        }
-
-        .ambient-particles circle:nth-child(3n) { animation-duration: 16s; fill: var(--accent3); }
-        .ambient-particles circle:nth-child(3n + 1) { animation-duration: 19s; fill: var(--secondary); }
-
-        @keyframes particle-drift {
-            from { transform: translate3d(-8px, 12px, 0) scale(.82); opacity: .08; }
-            to { transform: translate3d(12px, -18px, 0) scale(1.2); opacity: .25; }
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            background: var(--bg-card);
-            border: 2px solid var(--border);
-            border-radius: 50px;
-            padding: 8px 16px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: var(--glow);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-        }
-
-        .theme-toggle:hover {
-            transform: scale(1.05);
-        }
-
-        .theme-toggle-icon {
-            font-size: 1.5rem;
-            display: inline-block;
-            transition: transform .5s cubic-bezier(.2,.8,.2,1);
-        }
-        .theme-toggle:hover .theme-toggle-icon { transform: rotate(180deg); }
-
-        .theme-toggle-text {
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .header {
-            text-align: center;
-            color: var(--text-primary);
-            margin-bottom: 40px;
-            padding: 40px 30px;
-            background: var(--bg-card);
-            border-radius: 30px;
-            box-shadow: var(--glow);
-            border: 1px solid var(--border);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            position: relative;
-            overflow: hidden;
-            animation: fade-up 850ms cubic-bezier(.2,.75,.25,1) both, header-float 8s ease-in-out 900ms infinite;
-        }
-
-        .header::before, .header::after {
-            content: "";
-            position: absolute;
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
-            opacity: .15;
-            pointer-events: none;
-            animation: orb-drift 10s ease-in-out infinite alternate;
-        }
-        .header::before { top: -80px; left: 8%; }
-        .header::after { right: 8%; bottom: -100px; background: radial-gradient(circle, var(--accent) 0%, transparent 70%); animation-delay: -4s; }
-        .header h1, .header p { position: relative; z-index: 1; }
-
-        @keyframes float-in {
-            from { opacity: 0; transform: translateY(24px) scale(.985); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes header-float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-        @keyframes orb-drift {
-            from { transform: translate3d(-12px, 8px, 0) scale(.9); }
-            to { transform: translate3d(18px, -10px, 0) scale(1.12); }
-        }
-
-        .header h1 {
-            font-size: 2.8rem;
-            margin-bottom: 15px;
-            background: linear-gradient(110deg, var(--primary), var(--secondary), var(--primary), var(--secondary));
-            background-size: 250% 100%;
-            animation: title-shimmer 7s linear infinite;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        @keyframes title-shimmer { to { background-position: 250% 0; } }
-
-        .header p {
-            font-size: 1.2rem;
-            opacity: 0.8;
-            color: var(--text-secondary);
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
-        @media (max-width: 1024px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .card {
-            background: var(--bg-card);
-            border-radius: 25px;
-            padding: 35px;
-            box-shadow: var(--glow);
-            border: 1px solid var(--border);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            animation: fade-up .7s ease both;
-        }
-        .card:nth-child(2) { animation-delay: 100ms; }
-        @keyframes fade-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes card-bump { 50% { transform: scale(1.04); } }
-        .bump { animation: card-bump .28s ease; }
-        .crop-selector { position: relative; }
-        .crop-selector::after { content: "🌱"; position: absolute; right: 14px; top: 47px; font-size: 1.15rem; opacity: 0; pointer-events: none; }
-        .crop-selector.selected::after { animation: sprout-pop .5s ease forwards; }
-        @keyframes sprout-pop { 0% { opacity: 0; transform: scale(.3) translateY(8px); } 65% { opacity: 1; transform: scale(1.25) translateY(-3px); } 100% { opacity: 1; transform: scale(1); } }
-
-        .card h2 {
-            color: var(--primary);
-            margin-bottom: 30px;
-            font-size: 1.6rem;
-            border-bottom: 3px solid var(--primary);
-            padding-bottom: 15px;
-        }
-
-        .crop-selector {
-            margin-bottom: 30px;
-        }
-
-        .crop-selector label {
-            display: block;
-            margin-bottom: 12px;
-            color: var(--text-primary);
-            font-weight: 700;
-            font-size: 1.15rem;
-        }
-
-        .crop-selector select {
-            width: 100%;
-            padding: 16px;
-            border: 1px solid var(--border);
-            border-radius: 15px;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-        }
-
-        .crop-selector select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px var(--shadow);
-        }
-
-        .symptoms-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        .symptom-empty-state { margin: 4px 0 18px; padding: 14px 16px; border: 1px dashed var(--border); border-radius: 14px; color: var(--text-secondary); background: var(--bg-secondary); }
-
-        .symptom-item {
-            background: var(--bg-secondary);
-            border: 2px solid var(--border);
-            border-radius: 18px;
-            padding: 18px;
-            transition: all 0.3s ease;
-            opacity: 0;
-            animation: symptom-enter 560ms cubic-bezier(.2,.75,.25,1) forwards;
-            animation-delay: calc(var(--card-index, 0) * 55ms);
-            will-change: transform, opacity;
-        }
-        .symptom-item[hidden] { display: none; }
-
-        @keyframes symptom-enter {
-            from { opacity: 0; transform: translateY(18px) scale(.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .symptom-item:hover {
-            border-color: var(--secondary);
-            box-shadow: var(--glow);
-            transform: translateY(-3px);
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                scroll-behavior: auto !important;
-                transition-duration: 0.01ms !important;
-            }
-            .symptom-item { opacity: 1; will-change: auto; }
-            .ambient-blob { display: none; }
-        }
-
-        .symptom-item.active {
-            border-color: var(--primary);
-            background: linear-gradient(135deg, rgba(22, 163, 74, .12), rgba(132, 204, 22, .1));
-            box-shadow: 0 0 0 3px rgba(22, 163, 74, .08), var(--glow);
-        }
-
-        [data-theme="dark"] .symptom-item.active {
-            background: linear-gradient(135deg, rgba(52, 211, 153, .14), rgba(163, 230, 53, .1));
-        }
-
-        .symptom-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .symptom-checkbox {
-            width: 26px;
-            height: 26px;
-            margin-right: 14px;
-            cursor: pointer;
-            accent-color: var(--primary);
-        }
-
-        .symptom-label {
-            flex: 1;
-            font-weight: 600;
-            color: var(--text-primary);
-            cursor: pointer;
-            font-size: 0.95rem;
-        }
-        .checkmark { width: 20px; height: 20px; margin-left: 8px; color: var(--primary); flex: 0 0 auto; }
-        .checkmark path { fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 24; stroke-dashoffset: 24; transition: stroke-dashoffset .35s ease; }
-        .symptom-item.active .checkmark path { stroke-dashoffset: 0; }
-        .symptom-item.active { opacity: 1; animation-name: selected-ripple; animation-duration: 380ms; }
-        .symptom-item.bump { opacity: 1; animation: card-bump .28s ease; }
-        @keyframes selected-ripple { 50% { box-shadow: 0 0 0 7px rgba(22, 163, 74, .12); } }
-
-        .symptom-percentage {
-            display: block;
-            margin-top: 10px;
-            max-height: 0;
-            overflow: hidden;
-            opacity: 0;
-            transform: translateY(-5px);
-            transition: max-height .35s ease, opacity .3s ease, transform .3s ease, margin .3s ease;
-            margin-top: 0;
-        }
-
-        .symptom-percentage.show {
-            max-height: 100px;
-            opacity: 1;
-            transform: translateY(0);
-            margin-top: 10px;
-        }
-
-        .symptom-percentage label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .symptom-percentage input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            font-size: 1rem;
-            background: var(--bg-card);
-            color: var(--text-primary);
-            accent-color: var(--primary);
-            background-image: linear-gradient(90deg, rgba(22,163,74,.08), rgba(132,204,22,.08));
-        }
-
-        .symptom-percentage input:focus {
-            outline: none;
-            border-color: var(--secondary);
-            box-shadow: 0 0 0 3px var(--shadow);
-        }
-
-        .btn {
-            width: 100%;
-            padding: 20px;
-            position: relative;
-            overflow: hidden;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: var(--text-primary);
-            border: none;
-            border-radius: 15px;
-            font-size: 1.25rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 25px var(--shadow);
-            animation: button-glow 3s ease-in-out infinite;
-        }
-        .btn::after { content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%; background: linear-gradient(120deg, transparent, rgba(255,255,255,.5), transparent); transform: skewX(-20deg); }
-        .btn:hover::after { animation: shine .8s ease; }
-        @keyframes shine { to { left: 150%; } }
-        @keyframes button-glow { 50% { box-shadow: 0 8px 32px rgba(22, 163, 74, .3); } }
-
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 35px var(--shadow);
-        }
-
-        .btn:active {
-            transform: scale(.98);
-        }
-
-        .btn:disabled {
-            background: var(--border);
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-            opacity: 0.6;
-        }
-
-        .result-card {
-            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            color: var(--text-primary);
-            border-radius: 20px;
-            padding: 30px;
-            margin-top: 25px;
-            display: none;
-            box-shadow: 0 15px 40px var(--shadow);
-            border: 2px solid var(--border);
-        }
-
-        .result-card.show {
-            display: block;
-            animation: slideIn 0.5s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .result-card.analyzing::before { content: ""; position: absolute; z-index: 2; inset: 0 auto 0 -35%; width: 30%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.42), transparent); animation: scan-sweep 1.2s ease-in-out; pointer-events: none; }
-        @keyframes scan-sweep { to { left: 110%; } }
-        .result-card.disease-result { border-color: var(--accent2); animation: slideIn .5s ease, result-pulse 2.4s ease-in-out 2; }
-        @keyframes result-pulse { 50% { box-shadow: 0 0 0 4px rgba(251,191,36,.24), 0 0 32px rgba(251,191,36,.2); } }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .result-header {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
-            color: var(--text-primary);
-        }
-
-        .result-disease {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 15px;
-            line-height: 1.3;
-            color: var(--text-primary);
-            animation: disease-reveal .65s cubic-bezier(.2,.8,.2,1) both;
-        }
-        @keyframes disease-reveal { from { opacity: 0; transform: scale(.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-
-        .result-confidence {
-            font-size: 1.15rem;
-            opacity: 0.9;
-            margin-bottom: 25px;
-            color: var(--text-primary);
-        }
-        .top-predictions {
-            margin-top: 20px;
-        }
-
-        .top-predictions h3 {
-            font-size: 1.15rem;
-            margin-bottom: 18px;
-            opacity: 0.9;
-            color: var(--text-primary);
-        }
-
-        .prediction-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            margin-bottom: 10px;
-            backdrop-filter: blur(5px);
-        }
-        .prediction-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .prediction-name {
-            font-weight: 700;
-            font-size: 0.95rem;
-            color: var(--text-primary);
-        }
-
-        .prediction-prob {
-            font-weight: 800;
-            color: var(--text-primary);
-        }
-
-        .download-report, .download-history {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 11px 16px;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: var(--text-primary);
-            background: var(--bg-card);
-            text-decoration: none;
-            font-weight: 700;
-            box-shadow: var(--glow);
-            cursor: pointer;
-        }
-        .download-report { width: 100%; margin-top: 18px; }
-        .download-report[hidden] { display: none; }
-        .history-card { margin-bottom: 32px; }
-        .history-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; }
-        .history-heading h2 { margin: 0; }
-        .history-list { display: grid; gap: 12px; }
-        .history-entry { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--bg-secondary); }
-        .history-entry-copy { min-width: 0; }
-        .history-entry-title { color: var(--text-primary); font-weight: 700; overflow-wrap: anywhere; }
-        .history-entry-meta { margin-top: 4px; color: var(--text-secondary); font-size: .9rem; }
-        .prediction-flag { margin: 14px 0 18px; padding: 13px 15px; border: 1px solid var(--border); border-radius: 13px; color: var(--text-primary); background: rgba(16,185,129,.12); font-weight: 600; }
-        .result-confidence { margin: 10px 0 16px; color: var(--text-secondary); font-size: 1rem; }
-        .result-confidence strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
-        .prediction-flag.manual-review { color: #7F1D1D; border-color: #FDA4AF; background: rgba(251,113,133,.16); }
-        [data-theme="dark"] .prediction-flag.manual-review { color: #FFE4E6; border-color: rgba(251,113,133,.55); }
-        .history-review, .history-rule-note { display: inline-block; margin-top: 6px; padding: 3px 8px; border-radius: 999px; font-size: .78rem; font-weight: 700; }
-        .history-review { color: #9F1239; background: rgba(251,113,133,.16); }
-        .history-rule-note { color: var(--text-secondary); background: var(--accent3); }
-        [data-theme="dark"] .history-review { color: #FFE4E6; }
-        .history-entry .download-report { width: auto; margin-top: 0; flex: 0 0 auto; }
-        .history-empty { color: var(--text-secondary); }
-        @media (max-width: 620px) {
-            .history-heading, .history-entry { align-items: stretch; flex-direction: column; }
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
-        .spinner {
-            border: 4px solid var(--border);
-            border-top: 4px solid var(--primary);
-            border-radius: 50%;
-            width: 55px;
-            height: 55px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 18px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .error-message {
-            background: linear-gradient(135deg, #FFB5A7, #FF8A80);
-            color: #4A2C2A;
-            padding: 18px;
-            border-radius: 15px;
-            margin-top: 25px;
-            display: none;
-            font-weight: 600;
-            border: 2px solid var(--border);
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 30px;
-        }
-        .comparison-summary { margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--border); }
-        .comparison-summary h3 { color: var(--primary); margin-bottom: 8px; }
-        .comparison-summary > p { color: var(--text-secondary); font-size: .88rem; line-height: 1.6; }
-        .comparison-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 14px; }
-
-        .stat-card {
-            background: var(--bg-secondary);
-            border: 2px solid var(--border);
-            border-radius: 18px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 5px 20px var(--shadow);
-            transition: transform .25s ease, box-shadow .25s ease;
-        }
-        .stat-card:hover { transform: translateY(-4px) rotateX(2deg); box-shadow: var(--glow); }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 8px;
-            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .stat-label {
-            font-size: 0.9rem;
-            opacity: 0.8;
-            color: var(--text-secondary);
-            font-weight: 600;
-        }
-
-        .instructions {
-            background: linear-gradient(135deg, var(--accent3), var(--secondary));
-            border-left: 5px solid var(--primary);
-            padding: 20px;
-            margin-bottom: 25px;
-            border-radius: 15px;
-            border: 2px solid var(--border);
-        }
-
-        .instructions h3 {
-            color: var(--text-primary);
-            margin-bottom: 12px;
-            font-size: 1.1rem;
-            font-weight: 700;
-        }
-
-        .instructions ul {
-            margin-left: 25px;
-            color: var(--text-primary);
-        }
-
-        .instructions li {
-            margin-bottom: 8px;
-            font-size: 0.95rem;
-            font-weight: 500;
-        }
-
-        .selected-count {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            color: var(--text-primary);
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-size: 0.95rem;
-            font-weight: 700;
-            display: inline-block;
-            margin-bottom: 18px;
-            box-shadow: 0 4px 15px var(--shadow);
-            border: 2px solid var(--border);
-        }
-        .selected-count.bump { animation: card-bump .28s ease; }
-        [data-theme="dark"] .instructions { background: linear-gradient(135deg, rgba(52,211,153,.18), rgba(163,230,53,.12)); }
-        [data-theme="dark"] .btn { color: #052E16; }
-        [data-theme="dark"] .result-card { background: linear-gradient(135deg, rgba(20,70,48,.96), rgba(34,70,37,.96)); }
-        .stat-value[data-count] { font-variant-numeric: tabular-nums; }
-    </style>
-</head>
-<body>
-    <div class="splash-screen" id="splashScreen" role="status" aria-live="polite">
-        <div class="splash-content">
-            <span class="splash-leaf" aria-hidden="true">🌿</span>
-            <p class="splash-title">Plant Disease Prediction System</p>
-            <p class="splash-caption">Growing a healthier harvest</p>
-            <div class="splash-track" aria-hidden="true"><div class="splash-progress"></div></div>
-        </div>
-    </div>
-    <div class="ambient-blob one" aria-hidden="true"></div>
-    <div class="ambient-blob two" aria-hidden="true"></div>
-    <div class="ambient-blob three" aria-hidden="true"></div>
-    <svg class="ambient-particles" aria-hidden="true" focusable="false" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
-        <circle cx="90" cy="130" r="5" /><circle cx="270" cy="430" r="3" /><circle cx="430" cy="170" r="4" />
-        <circle cx="620" cy="720" r="5" /><circle cx="810" cy="300" r="3" /><circle cx="1010" cy="120" r="4" />
-        <circle cx="1190" cy="520" r="5" /><circle cx="1370" cy="250" r="3" /><circle cx="130" cy="780" r="4" />
-        <circle cx="900" cy="800" r="3" /><circle cx="560" cy="520" r="4" /><circle cx="1120" cy="740" r="3" />
-        <circle cx="350" cy="650" r="3" /><circle cx="760" cy="90" r="4" /><circle cx="1260" cy="100" r="3" />
-    </svg>
-    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch color theme">
-        <span class="theme-toggle-icon">🌙</span>
-        <span class="theme-toggle-text">Dark Mode</span>
-    </button>
-    
-    <div class="container">
-        <div class="header">
-            <h1>🌿 Plant Disease Prediction System</h1>
-            <p>Field Observation-Based Disease Detection</p>
-        </div>
-
-        <div class="main-content">
-            <div class="card">
-                <h2>📋 Symptom Checklist</h2>
+{% extends "base.html" %}
+{% block title %}Predict Plant Disease{% endblock %}
+{% block content %}
+        <section class="hero">
+            <h1 class="hero-title"><span>Proper care of</span><span class="leaf-icon"><svg viewBox="0 0 48 48"><path d="M24 2c6 8 6 14 0 22-6-8-6-14 0-22Z"/><path d="M24 2c6 8 6 14 0 22-6-8-6-14 0-22Z" transform="rotate(90 24 24)"/><path d="M24 2c6 8 6 14 0 22-6-8-6-14 0-22Z" transform="rotate(180 24 24)"/><path d="M24 2c6 8 6 14 0 22-6-8-6-14 0-22Z" transform="rotate(270 24 24)"/></svg></span><span class="serif">Plants</span></h1>
+            <div class="hero-grid">
+                <svg class="link-lines" aria-hidden="true"><line x1="48%" y1="34%" x2="80%" y2="46%"/><circle cx="48%" cy="34%" r="4"/></svg>
+                <div class="stage">
+                    <span class="ring" aria-hidden="true"></span>
+                    <div class="chip c1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 20h10M12 20v-8m0 0c-4 0-6-2-6-6 4 0 6 2 6 6Zm0 0c0-4 2-6 6-6 0 4-2 6-6 6Z"/></svg><b id="chipCrop">&mdash;</b><small>Crop</small></div>
+                    <div class="chip c2"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 10h6m-6 4h6"/></svg><b id="chipSymptoms">0</b><small>Symptoms</small></div>
+                    <div class="chip c3"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg><b id="chipStatus">&mdash;</b><small>Status</small></div>
+                    <img class="plant" src="{{ url_for('static', filename='images/plant.svg') }}" alt="Illustration of a leafy plant in a pot">
+                    <div class="temp-bar" aria-label="Prediction confidence"><span class="knob" id="confKnob">&mdash;</span></div>
+                </div>
+                <aside class="hero-side">
+                    <div><p>Spot plant diseases early. Select your crop, tick the symptoms you see on the leaf, and get an instant prediction with expert-style guidance.</p><a class="pill-btn" href="#tool">Start predicting</a></div>
+                    <div class="video-circle"><img src="{{ url_for('static', filename='images/leaf-circle.webp') }}" alt="Close-up of green leaves"><a class="play" href="#tool" aria-label="Start predicting"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4l14 8-14 8z"/></svg></a></div>
+                    <div class="side-note"><span class="dash"></span><h3>Manage your crops</h3><p>Simplify plant care with easy field observations. Get fast results and a downloadable report.</p></div>
+                </aside>
+            </div>
+            <div class="scroll-hint" aria-hidden="true"><span>Scroll</span><i></i></div>
+        </section>
+
+        <div class="main-content" id="predictionWorkspace" hidden>
+            <div class="card" id="tool">
+                <h2 class="section-title"><span class="icon-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5h6M9 10h6m-6 4h6m-6 4h3"/></svg></span>Symptom Checklist</h2>
                 
                 <div class="instructions">
-                    <h3>📌 How to Use:</h3>
-                    <ul>
+                    <h3><span class="icon-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3m.1 4h.01"/></svg></span>How to Use</h3>
+                    <ol>
                         <li>Select the crop type you're observing</li>
                         <li>Check which symptoms are present on the leaf</li>
                         <li>For each checked symptom, estimate the percentage affected</li>
                         <li>Click "Predict Disease" to get results</li>
-                    </ul>
+                    </ol>
                 </div>
 
                 <form id="predictionForm">
                     <div class="crop-selector">
-                        <label for="crop">🌱 Crop Type</label>
+                        <label class="crop-label" for="crop"><span class="icon-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 20h10M12 20v-8m0 0c-4 0-6-2-6-6 4 0 6 2 6 6Zm0 0c0-4 2-6 6-6 0 4-2 6-6 6Z"/></svg></span>Crop Type</label>
                         <select id="crop" name="crop" required>
                             <option value="">Select Crop</option>
                             {% for crop in crop_options %}
@@ -787,7 +66,7 @@
                         {% endfor %}
                     </div>
 
-                    <button type="submit" class="btn" id="predictBtn" disabled>🔮 Predict Disease</button>
+                    <button type="submit" class="btn btn-primary" id="predictBtn" disabled>Predict Disease</button>
                 </form>
 
                 <div class="loading" id="loading">
@@ -798,12 +77,9 @@
                 <div class="error-message" id="errorMessage"></div>
             </div>
 
-            <div class="card">
-                <h2>🎯 Prediction Results</h2>
-                <div id="resultPlaceholder" style="text-align: center; color: var(--text-secondary); padding: 60px 25px;">
-                    <p style="font-size: 4rem; margin-bottom: 20px;">📊</p>
-                    <p>Select crop and check symptoms to see results</p>
-                </div>
+            <div class="card result-column">
+                <h2 class="section-title"><span class="icon-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="m16.2 7.8 4.3-4.3"/></svg></span>Prediction Results</h2>
+                <div id="resultPlaceholder" class="empty-result"><span class="icon-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-5 5"/></svg></span><p>Results will appear here.</p></div>
 
                 <div class="result-card" id="resultCard">
                     <div class="result-header">Predicted Disease</div>
@@ -811,99 +87,35 @@
                     <div class="result-confidence">Confidence: <strong id="confidenceScore">-</strong></div>
                     <div class="prediction-flag" id="predictionFlag" role="status" hidden></div>
                     <div class="top-predictions">
-                        <h3>Top 3 Predictions</h3>
+                        <h3>Top Predictions</h3>
                         <div id="topPredictions"></div>
                     </div>
-                    <a class="download-report" id="downloadReport" href="#" hidden>Download this report (CSV)</a>
+                    <a class="download-report" id="downloadReport" href="#" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></svg>Download this report (CSV)</a>
                 </div>
 
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value" data-count="99.69" data-suffix="%">0%</div>
-                        <div class="stat-label">Model Accuracy</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" data-count="12">0</div>
-                        <div class="stat-label">Disease Classes</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" data-count="18" data-suffix="K">0K</div>
-                        <div class="stat-label">Training Samples</div>
-                    </div>
-                </div>
-                <div class="comparison-summary">
-                    <h3>Comparison Models</h3>
-                    <p>Held-out accuracy using four numeric leaf-area features only. The Rotation Forest uses all eight features, so these are limited-feature baselines.</p>
-                    <div class="stats-grid comparison-grid">
-                        {% for model_name, model_info in comparison_metrics.models.items() %}
-                        <div class="stat-card">
-                            <div class="stat-value">{{ '%.2f'|format(model_info.accuracy_percent) }}%</div>
-                            <div class="stat-label">{{ model_name }} baseline</div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
             </div>
         </div>
-        <section class="card history-card" aria-labelledby="historyTitle">
-            <div class="history-heading">
-                <h2 id="historyTitle">Prediction History</h2>
-                <a class="download-history" href="/history/report.csv">Download all history (CSV)</a>
-            </div>
-            <div class="history-list" id="historyList" aria-live="polite">
-                <p class="history-empty">Loading saved predictions...</p>
-            </div>
-        </section>
-    </div>
+{% endblock %}
+{% block scripts %}
+<script>
 
-    <script>
-        // Keep the branded splash visible for five seconds before fading it out.
-        const splashScreen = document.getElementById('splashScreen');
-        window.setTimeout(() => {
-            splashScreen.classList.add('is-hidden');
-            splashScreen.setAttribute('aria-hidden', 'true');
-            splashScreen.addEventListener('transitionend', () => splashScreen.remove(), { once: true });
-            window.setTimeout(() => splashScreen.remove(), 600);
-        }, 5000);
-
-        // Stagger the server-rendered symptom cards without delaying the first row.
         document.querySelectorAll('.symptom-item').forEach((card, index) => {
             card.style.setProperty('--card-index', Math.min(index, 12));
         });
 
-        // Theme toggle functionality
-        const themeToggle = document.getElementById('themeToggle');
-        const themeIcon = themeToggle.querySelector('.theme-toggle-icon');
-        const themeText = themeToggle.querySelector('.theme-toggle-text');
-        
-        // Check for saved theme preference or default to light
-        const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        updateThemeToggle(savedTheme);
-        themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
-        
-        themeToggle.addEventListener('click', function() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateThemeToggle(newTheme);
-            themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        const landingHero = document.querySelector('.hero');
+        const predictionWorkspace = document.getElementById('predictionWorkspace');
+        document.querySelectorAll('a[href="#tool"]').forEach(link => {
+            link.addEventListener('click', event => {
+                event.preventDefault();
+                landingHero.hidden = true;
+                predictionWorkspace.hidden = false;
+                predictionWorkspace.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
         });
+
+        // Prediction form behavior.
         
-        function updateThemeToggle(theme) {
-            themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
-            if (theme === 'dark') {
-                themeIcon.textContent = '☀️';
-                themeText.textContent = 'Light Mode';
-            } else {
-                themeIcon.textContent = '🌙';
-                themeText.textContent = 'Dark Mode';
-            }
-        }
-        
-        // Handle checkbox changes
         const symptomsGrid = document.getElementById('symptomsGrid');
         const selectedCount = document.getElementById('selectedCount');
         const predictBtn = document.getElementById('predictBtn');
@@ -945,9 +157,14 @@
             
             const cropSelected = cropSelect.value !== '';
             predictBtn.disabled = !(cropSelected && checked > 0);
+            document.getElementById('chipSymptoms').textContent = checked;
         }
 
         cropSelect.addEventListener('change', function() {
+            document.getElementById('chipCrop').textContent = cropSelect.value || '\u2014';
+            document.getElementById('chipStatus').textContent = '\u2014';
+            document.getElementById('confKnob').textContent = '\u2014';
+            document.getElementById('confKnob').style.left = '50%';
             cropSelect.closest('.crop-selector').classList.toggle('selected', Boolean(cropSelect.value));
             filterSymptomsForCrop();
         });
@@ -985,87 +202,11 @@
         document.querySelectorAll('.percentage-input').forEach(input => {
             input.addEventListener('input', () => {
                 const amount = Math.min(100, Math.max(0, Number(input.value) || 0));
-                const color = amount < 30 ? '#10B981' : amount <= 60 ? '#F59E0B' : '#E11D48';
+                const color = amount < 30 ? '#3E9B5A' : amount <= 60 ? '#E0A030' : '#D64545';
                 input.style.borderColor = color;
                 input.style.backgroundImage = `linear-gradient(90deg, ${color}33 ${amount}%, transparent ${amount}%)`;
             });
         });
-
-        const statObserver = new IntersectionObserver(entries => {
-            entries.forEach(entry => {
-                if (!entry.isIntersecting) return;
-                const stat = entry.target;
-                const target = Number(stat.dataset.count);
-                const suffix = stat.dataset.suffix || '';
-                const started = performance.now();
-                const tick = now => {
-                    const progress = Math.min(1, (now - started) / 1100);
-                    const eased = 1 - Math.pow(1 - progress, 3);
-                    stat.textContent = (target % 1 ? (target * eased).toFixed(2) : Math.round(target * eased)) + suffix;
-                    if (progress < 1) requestAnimationFrame(tick);
-                };
-                requestAnimationFrame(tick);
-                statObserver.unobserve(stat);
-            });
-        }, { threshold: .55 });
-        document.querySelectorAll('.stat-value[data-count]').forEach(stat => statObserver.observe(stat));
-
-        const historyList = document.getElementById('historyList');
-        async function loadPredictionHistory() {
-            try {
-                const response = await fetch('/history');
-                const data = await response.json();
-                historyList.replaceChildren();
-
-                if (!data.success || data.history.length === 0) {
-                    const empty = document.createElement('p');
-                    empty.className = 'history-empty';
-                    empty.textContent = 'No saved predictions yet.';
-                    historyList.append(empty);
-                    return;
-                }
-
-                data.history.forEach(entry => {
-                    const row = document.createElement('article');
-                    row.className = 'history-entry';
-                    const copy = document.createElement('div');
-                    copy.className = 'history-entry-copy';
-                    const title = document.createElement('div');
-                    title.className = 'history-entry-title';
-                    title.textContent = `${entry.crop} · ${entry.predicted_disease}`;
-                    const meta = document.createElement('div');
-                    meta.className = 'history-entry-meta';
-                    const date = new Date(entry.created_at).toLocaleString();
-                    const symptomNames = entry.symptoms.map(symptom => symptom.name).join(', ');
-                    const confidenceText = Number.isFinite(entry.confidence)
-                        ? `${(entry.confidence * 100).toFixed(2)}%`
-                        : 'N/A — rule-based result';
-                    meta.textContent = `${date} · ${symptomNames} · Confidence: ${confidenceText}`;
-                    if (entry.manual_review) {
-                        const review = document.createElement('div');
-                        review.className = 'history-review';
-                        review.textContent = 'Manual review recommended';
-                        copy.append(title, meta, review);
-                    } else if (entry.prediction_method === 'zero_area_healthy_rule') {
-                        const note = document.createElement('div');
-                        note.className = 'history-rule-note';
-                        note.textContent = 'Rule-based healthy result (0% affected area)';
-                        copy.append(title, meta, note);
-                    } else {
-                        copy.append(title, meta);
-                    }
-                    const download = document.createElement('a');
-                    download.className = 'download-report';
-                    download.href = `/history/${entry.id}/report.csv`;
-                    download.textContent = 'Download CSV';
-                    row.append(copy, download);
-                    historyList.append(row);
-                });
-            } catch (error) {
-                historyList.textContent = 'Saved prediction history is unavailable.';
-            }
-        }
-        loadPredictionHistory();
 
         // Form submission
         document.getElementById('predictionForm').addEventListener('submit', async function(e) {
@@ -1119,6 +260,11 @@
                 predictBtn.disabled = false;
                 
                 if (data.success) {
+                    document.getElementById('chipStatus').textContent = /healthy/i.test(data.predicted_disease) ? 'Healthy' : 'Diseased';
+                    const knob = document.getElementById('confKnob');
+                    const pct = Number.isFinite(data.confidence) ? data.confidence * 100 : 0;
+                    knob.textContent = Number.isFinite(data.confidence) ? Math.round(pct) + '%' : '\u2014';
+                    knob.style.left = Math.min(94, Math.max(6, pct)) + '%';
                     resultPlaceholder.style.display = 'none';
                     resultCard.classList.remove('analyzing', 'disease-result');
                     void resultCard.offsetWidth;
@@ -1153,7 +299,6 @@
                         row.append(name);
                         topPredictions.append(row);
                     });
-                    loadPredictionHistory();
                 } else {
                     errorMessage.textContent = 'Error: ' + data.error;
                     errorMessage.classList.add('show');
@@ -1165,6 +310,6 @@
                 errorMessage.classList.add('show');
             }
         });
-    </script>
-</body>
-</html>
+
+</script>
+{% endblock %}

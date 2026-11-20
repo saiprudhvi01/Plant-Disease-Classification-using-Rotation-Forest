@@ -14,17 +14,17 @@
     "stratified": true
   },
   "models": {
-    "SVM": {
-      "accuracy": 0.5736111111111111,
-      "accuracy_percent": 57.36,
-      "model_file": "svm_comparison_model.pkl",
-      "configuration": "RBF kernel, C=1.0"
+    "Extra Trees": {
+      "accuracy": 0.5402777777777777,
+      "accuracy_percent": 54.03,
+      "model_file": "extra_trees_comparison_model.pkl",
+      "configuration": "100 trees, max_depth=4, min_samples_leaf=5"
     },
-    "KNN": {
-      "accuracy": 0.5641666666666667,
-      "accuracy_percent": 56.42,
-      "model_file": "knn_comparison_model.pkl",
-      "configuration": "25 neighbors, uniform weights"
+    "Random Subspace": {
+      "accuracy": 0.5080555555555556,
+      "accuracy_percent": 50.81,
+      "model_file": "random_subspace_comparison_model.pkl",
+      "configuration": "100 decision trees, 50% feature subsets, max_depth=4, min_samples_leaf=5"
     }
   }
 }
